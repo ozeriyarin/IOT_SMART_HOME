@@ -20,22 +20,22 @@ if __name__ == "__main__":
 
     state = {"device_id": args.device_id, "room": args.room, "ts": now_iso(), "state": "OFF"}
 
-def publish_state():
-    state["ts"] = now_iso()
-    client.publish(topic_state, json.dumps(state), qos=0, retain=True)
-    print(f"[RELAY] state -> {state}")
+    def publish_state():
+        state["ts"] = now_iso()
+        client.publish(topic_state, json.dumps(state), qos=0, retain=True)
+        print(f"[RELAY] state -> {state}")
 
-    telemetry_topic = f"hk/telemetry/{state['device_id']}"
-    telemetry_payload = {
-        "device_id": state["device_id"],
-        "class": "actuator",
-        "type": "relay",
-        "model": "HK-RELAY",
-        "location": state.get("room", "unknown"),
-        "ts": now_iso(),
-        "metrics": {"state": state["state"]}
-    }
-    client.publish(telemetry_topic, json.dumps(telemetry_payload), qos=0, retain=False)
+        telemetry_topic = f"hk/telemetry/{state['device_id']}"
+        telemetry_payload = {
+            "device_id": state["device_id"],
+            "class": "actuator",
+            "type": "relay",
+            "model": "HK-RELAY",
+            "location": state.get("room", "unknown"),
+            "ts": now_iso(),
+            "metrics": {"state": state["state"]}
+        }
+        client.publish(telemetry_topic, json.dumps(telemetry_payload), qos=0, retain=False)
 
     def on_msg(_c, _u, msg):
         try:
