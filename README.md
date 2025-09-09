@@ -1,6 +1,6 @@
 # HouseKeyper – IoT Smart Home Safety (course project)
 
-A minimal, fully runnable stack that meets the rubric:
+## Stack:
 - **3 emulator types** (sensors: DHT/env, leak; actuator: button/knob; **relay** device that reacts to commands)
 - **Data manager app**: subscribes to MQTT, writes to SQLite, runs rules, publishes warnings/alarms
 - **GUI app**: Streamlit dashboard with live status and alerts; buttons to toggle a relay
