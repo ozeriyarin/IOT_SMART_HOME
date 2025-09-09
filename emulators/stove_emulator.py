@@ -2,10 +2,10 @@ import argparse, json, os, time, random, datetime
 import paho.mqtt.client as mqtt
 
 def now_iso():
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat() + "Z"
 
 def publish_loop(topic, payload_fn, host, port, period):
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.connect(host, port, 60)
     try:
         while True:
@@ -32,14 +32,18 @@ if __name__ == "__main__":
     topic = f"hk/telemetry/{args.device_id}"
     
     def build():
-        global on, surf
+        # Use function attributes to store state
+        if not hasattr(build, "on"):
+            build.on = False
+        if not hasattr(build, "surf"):
+            build.surf = 20.0
         # Random walk on temperature; toggle on/off sometimes
         if random.random() < 0.05:
-            on = not on
-        if on:
-            surf = max(50.0, min(220.0, surf + random.uniform(-5, 8)))
+            build.on = not build.on
+        if build.on:
+            build.surf = max(50.0, min(220.0, build.surf + random.uniform(-5, 8)))
         else:
-            surf = max(20.0, surf - random.uniform(3, 7))
+            build.surf = max(20.0, build.surf - random.uniform(3, 7))
         return {
             "device_id": args.device_id,
             "class": "sensor",
@@ -47,6 +51,6 @@ if __name__ == "__main__":
             "model": "HK-STOVE",
             "location": args.room,
             "ts": now_iso(),
-            "metrics": {"stove_on": on, "surface_temp_c": round(surf,1)}
+            "metrics": {"stove_on": build.on, "surface_temp_c": round(build.surf,1)}
         }
     publish_loop(topic, build, args.host, args.port, args.period)

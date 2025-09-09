@@ -82,22 +82,48 @@ def evaluate_rules(msg: Dict[str, Any], client: mqtt.Client):
 
 def on_message(client, _userdata, msg):
     try:
-        payload = json.loads(msg.payload.decode("utf-8"))
+        topic = msg.topic
+        raw = json.loads(msg.payload.decode("utf-8"))
+
+        if topic.startswith("hk/telemetry/"):
+            payload = raw  
+
+        elif topic.startswith("hk/actuators/relay/") and topic.endswith("/state"):
+            # topic: hk/actuators/relay/<device_id>/state
+            parts = topic.split("/")
+            device_id = parts[3] if len(parts) >= 5 else raw.get("device_id", "relay-unknown")
+            room = raw.get("room", "unknown")
+            state = raw.get("state", "UNKNOWN")
+            payload = {
+                "device_id": device_id,
+                "class": "actuator",
+                "type": "relay",
+                "model": "HK-RELAY",
+                "location": room,
+                "ts": iso_now(),
+                "metrics": {"state": state}
+            }
+        else:
+            return
+
         upsert_device(payload)
         ts = payload.get("ts", iso_now())
         for k, v in (payload.get("metrics") or {}).items():
             insert_reading(payload.get("device_id",""), ts, k, v)
         evaluate_rules(payload, client)
-        print(f"[INGEST] {msg.topic} -> ok")
+        print(f"[INGEST] {topic} -> ok")
+
     except Exception as e:
         print("[ERROR]", e)
 
+
 def main():
     init_db()
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_message = on_message
     client.connect(BROKER_HOST, BROKER_PORT, 60)
     client.subscribe("hk/telemetry/+")
+    client.subscribe("hk/actuators/relay/+/state")
     print(f"[DATA-MANAGER] mqtt://{BROKER_HOST}:{BROKER_PORT} | db={DB_PATH}")
     try:
         client.loop_forever()

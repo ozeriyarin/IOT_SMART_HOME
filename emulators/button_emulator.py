@@ -5,7 +5,7 @@ def now_iso():
     return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 def publish_loop(topic, payload_fn, host, port, period):
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.connect(host, port, 60)
     try:
         while True:
