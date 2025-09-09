@@ -1,0 +1,19 @@
+# .gitignore for Python projects
+__pycache__/
+*.py[cod]
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+*.log
+.env
+venv/
+.envrc
+.DS_Store
+*.egg-info/
+# VSCode
+.vscode/
+# Jupyter
+.ipynb_checkpoints/
+# Docker
+*.pid
